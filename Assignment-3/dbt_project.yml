@@ -1,0 +1,25 @@
+name: 'greenwheel'
+version: '1.0.0'
+config-version: 2
+
+# This project targets a profile named 'greenwheel' in your ~/.dbt/profiles.yml.
+# See README.md for a sample profile you can adapt to your warehouse
+# (Snowflake, Postgres, DuckDB, etc.).
+profile: 'greenwheel'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+analysis-paths: ["analyses"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  greenwheel:
+    +materialized: view  # stg_users / stg_bikes stay views by default;
+                          # fct_bike_usage overrides this to `table` in its own file

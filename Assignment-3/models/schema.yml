@@ -1,0 +1,73 @@
+version: 2
+
+sources:
+  - name: greenwheel
+    description: >
+      Raw GreenWheel data, loaded into the warehouse via `dbt seed` from the
+      CSV files in seeds/. In a production setup these would instead be
+      landed by an EL tool (Fivetran, Airbyte, etc.) -- here dbt seed stands
+      in for that ingestion step.
+    schema: "{{ target.schema }}"
+    tables:
+      - name: raw_users
+        description: "One row per registered GreenWheel user."
+        columns:
+          - name: user_id
+            description: "Primary key for a user."
+            tests:
+              - unique
+              - not_null
+
+      - name: raw_bikes
+        description: "One row per bike in the GreenWheel fleet."
+        columns:
+          - name: bike_id
+            description: "Primary key for a bike."
+            tests:
+              - unique
+              - not_null
+
+      - name: raw_trips
+        description: "One row per completed bike rental (trip)."
+        columns:
+          - name: trip_id
+            description: "Primary key for a trip."
+            tests:
+              - unique
+              - not_null
+
+models:
+  - name: stg_users
+    description: >
+      Cleaned view of GreenWheel users: user_name is uppercased and email
+      is lowercased for consistent formatting downstream.
+    columns:
+      - name: user_id
+        description: "Primary key for a user; passed through unchanged from raw_users."
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_bikes
+    description: >
+      Cleaned view of the GreenWheel bike fleet. The source column
+      model_type is renamed to bike_model for clarity.
+    columns:
+      - name: bike_id
+        description: "Primary key for a bike; passed through unchanged from raw_bikes."
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_bike_usage
+    description: >
+      One row per bike, aggregating all of its trips: total number of
+      trips, total revenue (total_cost), and total minutes ridden
+      (total_minutes_ridden). Bikes with zero trips still appear, with
+      zero-valued metrics.
+    columns:
+      - name: bike_id
+        description: "Primary key for a bike; foreign key back to stg_bikes."
+        tests:
+          - unique
+          - not_null
